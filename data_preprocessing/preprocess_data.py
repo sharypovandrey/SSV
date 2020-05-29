@@ -19,14 +19,14 @@ import argparse
 import pandas as pd
 import pickle
 from tqdm import tqdm
-sys.path.append('/root/data_preprocessing/mtcnn-pytorch')
+sys.path.append('./data_preprocessing/mtcnn-pytorch')
 from src import detect_faces
-sys.path.append('/root/extern')
+sys.path.append('./extern')
 from transformImage import transformImage
 
 parser = argparse.ArgumentParser(description='Pre-process data')
 
-parser.add_argument('--weights-dir', type=str, default='/root/data_preprocessing/mtcnn-pytorch/src/weights',
+parser.add_argument('--weights-dir', type=str, default='./data_preprocessing/mtcnn-pytorch/src/weights',
                     help='directory in which the pretrained face detector weights are saved')
 parser.add_argument('--dataset', type=str, default='BIWI',
                     help='dataset, default: BIWI, options: BIWI/300W_LP')

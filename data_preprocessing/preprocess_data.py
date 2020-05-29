@@ -111,7 +111,7 @@ if __name__ == "__main__":
 
         images = open(args.src_dir + '/images.txt').readlines()
         for image in images[args.start:]:
-            cv_orig_im = cv2.imread(os.path.join(image[:-1]))
+            cv_orig_im = cv2.imread(os.path.join(args.src_dir, image[:-1]))
             pil_im = Image.fromarray(cv2.cvtColor(cv_orig_im, cv2.COLOR_BGR2RGB))
             # bboxes, landmarks = detect_faces(pil_im, min_face_size = 30, in_weights_dir = args.weights_dir)   
             bboxes, landmarks = detect_faces(pil_im, min_face_size = 30)   

@@ -11,6 +11,11 @@ SSV provides a framework to learn viewpoint estimation of objects just using ima
 * [ArXiv](http://arxiv.org/abs/2004.01793) 
 * [NVIDIA Project Page](https://research.nvidia.com/publication/2020-03_Self-Supervised-Viewpoint-Learning)  
 
+#Docker
+```
+docker build -t ssv docker/.
+docker run --rm -it -v ~/Github/SSV:/root ssv bash
+```
 
 ## Prerequisites
 We used Pytorch 1.0 with CUDA 10 and CuDNN 7.4.1 in Ubuntu 16.04.
@@ -23,10 +28,10 @@ Please download MTCNN-Pytorch from [here](https://github.com/TropComplique/mtcnn
 ## Datasets
 ### 300W-LP
 300W-LP dataset can be downloaded from [here](http://www.cbsr.ia.ac.cn/users/xiangyuzhu/projects/3DDFA/main.htm). To preprocess it run:  
-`python preprocess_data.py --src-dir <path_to_300wlp_dataset> --dst-dir <path_to_processed_300wlp> --datset 300WLP`
+`python data_preprocessing/preprocess_data.py --src-dir <path_to_300wlp_dataset> --dst-dir <path_to_processed_300wlp> --dataset 300WLP`
 
 Create an lmdb of the preprocessed 300W-LP data by running:  
-`python  prepare_lmdb.py <path_to_processed_300wlp> --out <path_to_300wlp_lmdb>`
+`python data_preprocessing/prepare_lmdb.py <path_to_processed_300wlp> --out <path_to_300wlp_lmdb>`
 
 
 ### BIWI Head Pose

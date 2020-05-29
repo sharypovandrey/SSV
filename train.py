@@ -24,14 +24,16 @@ from utils.ssv import get_az_el_ct_rots, gen_az_rots, gen_el_rots, gen_ct_rots, 
 from utils.ssv import AlexNetConv4, accumulate, sample_data, requires_grad
 from utils.ssv import Saver
 
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
 def train(args, dataset, generator, discriminator, saver):
 
     loader = sample_data(dataset, args.batch_size, 128, args.num_workers)
     data_loader = iter(loader)
 
-    vg = AlexNetConv4().cuda()
+    vg = AlexNetConv4().to(device)
     requires_grad(vg, False)
-    cosd = torch.nn.CosineSimilarity().cuda()
+    cosd = torch.nn.CosineSimilarity().to(device)
     cosd.requires_grad = True
 
     requires_grad(generator, False)
@@ -49,10 +51,10 @@ def train(args, dataset, generator, discriminator, saver):
 
         used_sample += real_image.shape[0]
         b_size = real_image.size(0)
-        real_image1 = real_image.cuda()
-        real_image1_fl = fl_real_image.cuda()
+        real_image1 = real_image.to(device)
+        real_image1_fl = fl_real_image.to(device)
      
-        gen_in11, gen_in12, gen_in21, gen_in22, gen_in31, gen_in32 = torch.FloatTensor(6, b_size, code_size).uniform_(-1,1).cuda().chunk(6, 0)
+        gen_in11, gen_in12, gen_in21, gen_in22, gen_in31, gen_in32 = torch.FloatTensor(6, b_size, code_size).uniform_(-1,1).to(device).chunk(6, 0)
         gen_in1 = [gen_in11.squeeze(0), gen_in12.squeeze(0)]
         gen_in2 = [gen_in21.squeeze(0), gen_in22.squeeze(0)] 
         gen_in3 = [gen_in31.squeeze(0), gen_in32.squeeze(0)]
@@ -76,7 +78,7 @@ def train(args, dataset, generator, discriminator, saver):
         flipped_azs2_rot = gen_az_rots(b_size,-azs2.squeeze())
         flipped_els2_rot = gen_el_rots(b_size,els2.squeeze())
         flipped_cts2_rot = gen_ct_rots(b_size,-cts2.squeeze())        
-        rot_mats_flipped = torch.cat((torch.bmm(torch.bmm(flipped_azs2_rot[:,:,0:3],flipped_els2_rot[:,:,0:3]), flipped_cts2_rot[:,:,0:3]), torch.zeros((b_size,3,1)).cuda()),2)        
+        rot_mats_flipped = torch.cat((torch.bmm(torch.bmm(flipped_azs2_rot[:,:,0:3],flipped_els2_rot[:,:,0:3]), flipped_cts2_rot[:,:,0:3]), torch.zeros((b_size,3,1)).to(device)),2)        
 
         #--------Train VPNet-------#
         discriminator.zero_grad()
@@ -90,7 +92,7 @@ def train(args, dataset, generator, discriminator, saver):
         vpp_az_rot1 = gen_az_rots(b_size,vpp1['a'])
         vpp_el_rot1 = gen_el_rots(b_size,vpp1['e'])
         vpp_ct_rot1 = gen_ct_rots(b_size,vpp1['t'])
-        vpp_rot_mats = torch.cat((torch.bmm(torch.bmm(vpp_az_rot1[:,:,0:3],vpp_el_rot1[:,:,0:3]), vpp_ct_rot1[:,:,0:3]), torch.zeros((b_size,3,1)).cuda()),2)
+        vpp_rot_mats = torch.cat((torch.bmm(torch.bmm(vpp_az_rot1[:,:,0:3],vpp_el_rot1[:,:,0:3]), vpp_ct_rot1[:,:,0:3]), torch.zeros((b_size,3,1)).to(device)),2)
         reconstructed_image1 = generator([real_z_pred1[:,:code_size].reshape(b_size,code_size), real_z_pred1[:,code_size:].reshape(b_size,code_size)], vpp_rot_mats)
 
         rreal_image1 = F.interpolate(real_image1, size=(224,224), mode='bilinear', align_corners=False)
@@ -119,7 +121,7 @@ def train(args, dataset, generator, discriminator, saver):
             flip_consistency_loss += fc_loss[key]
 
         # Pass Z through generator for fake images
-        fake_image1 = generator(gen_in1, rot_mats1.cuda())
+        fake_image1 = generator(gen_in1, rot_mats1.to(device))
 
         # Pass fake images through D for predictions. 
         fake_predict1, fake_z_predict1, fake_vp_pred1, _ = discriminator(fake_image1.detach())
@@ -148,7 +150,7 @@ def train(args, dataset, generator, discriminator, saver):
 
         # Calculate gradient penalty
         ################################
-        eps = torch.rand(b_size, 1, 1, 1).cuda()
+        eps = torch.rand(b_size, 1, 1, 1).to(device)
         x_hat = eps * real_image1.data + (1 - eps) * fake_image1.data
         x_hat.requires_grad = True
         hat_predict, _, _, _ = discriminator(x_hat)
@@ -171,7 +173,7 @@ def train(args, dataset, generator, discriminator, saver):
         requires_grad(generator, True)
         requires_grad(discriminator, False)
 
-        fake_image2 = generator(gen_in2, rot_mats2.cuda())
+        fake_image2 = generator(gen_in2, rot_mats2.to(device))
 
         cls_predict2, z_pred2, vp_pred2, _ = discriminator(fake_image2)
 
@@ -218,11 +220,11 @@ def train(args, dataset, generator, discriminator, saver):
             with torch.no_grad():
                 for _ in range(gen_i):
 
-                    gen_in31, gen_in32 = torch.FloatTensor(2, gen_j, code_size).uniform_(-1,1).cuda().chunk(2, 0)
+                    gen_in31, gen_in32 = torch.FloatTensor(2, gen_j, code_size).uniform_(-1,1).to(device).chunk(2, 0)
                     gen_in3 = [gen_in31.squeeze(0), gen_in32.squeeze(0)]
                     # rot_mats_test, _, _, _ = get_az_el_rots(gen_j, args.az_range, args.el_range)
                     rot_mats_test, _, _, _, _ = get_az_el_ct_rots(gen_j, args.az_range, args.el_range, args.ct_range)
-                    images.append(g_running(gen_in3, rot_mats_test.cuda()).data.cpu())
+                    images.append(g_running(gen_in3, rot_mats_test.to(device)).data.cpu())
 
             utils.save_image(torch.cat(images, 0), f'{args.exp_root}/{args.exp_name}/sample/{str(i + 1).zfill(6)}.png', nrow=gen_i, normalize=True, range=(-1, 1),)
 
@@ -268,7 +270,7 @@ if __name__ == '__main__':
     parser.add_argument('--save_interval', default=5000, type=int, help='interval to save models')        
     parser.add_argument('--sample_interval', default=5000, type=int, help='interval to generate samples')            
     
-    parser.add_argument('--gpus', type=str, default=0, help='GPU numbers used for training')
+    parser.add_argument('--gpus', type=int, default=None, help='GPU numbers used for training')
     parser.add_argument('--num_workers', type=int, default=16, help='num workers for data loader')
     
     parser.add_argument('--phase', type=int, default=600_000, help='number of samples used for each training phases')
@@ -296,18 +298,18 @@ if __name__ == '__main__':
     
     code_size = args.code_size
 
-    generator = nn.DataParallel(VPAwareSynthesizer(code_size)).cuda()
-    g_running = VPAwareSynthesizer(code_size).cuda()    
+    generator = nn.DataParallel(VPAwareSynthesizer(code_size)).to(device)
+    g_running = VPAwareSynthesizer(code_size).to(device)    
     g_running.train(False)
     
-    discriminator = nn.DataParallel(VPNet(2*code_size, instance_norm=True)).cuda()
+    discriminator = nn.DataParallel(VPNet(2*code_size, instance_norm=True)).to(device)
 
     if args.z_recn_loss == 'l2':
-        z1_recn_loss = nn.MSELoss().cuda()
+        z1_recn_loss = nn.MSELoss().to(device)
     else:
-        z1_recn_loss = nn.SmoothL1Loss().cuda()
+        z1_recn_loss = nn.SmoothL1Loss().to(device)
 
-    flipc_G_loss = nn.SmoothL1Loss().cuda()
+    flipc_G_loss = nn.SmoothL1Loss().to(device)
 
     # Set optimizers
     g_optimizer = optim.Adam(generator.module.generator.parameters(), lr=args.lr, betas=(0.0, 0.99))

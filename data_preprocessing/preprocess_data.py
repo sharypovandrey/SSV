@@ -19,14 +19,14 @@ import argparse
 import pandas as pd
 import pickle
 from tqdm import tqdm
-sys.path.append('./mtcnn-pytorch')
+sys.path.append('/root/data_preprocessing/mtcnn-pytorch')
 from src import detect_faces
-sys.path.append('../extern')
+sys.path.append('/root/extern')
 from transformImage import transformImage
 
 parser = argparse.ArgumentParser(description='Pre-process data')
 
-parser.add_argument('--weights-dir', type=str, default='mtcnn-pytorch/src/weights',
+parser.add_argument('--weights-dir', type=str, default='/root/data_preprocessing/mtcnn-pytorch/src/weights',
                     help='directory in which the pretrained face detector weights are saved')
 parser.add_argument('--dataset', type=str, default='BIWI',
                     help='dataset, default: BIWI, options: BIWI/300W_LP')
@@ -110,10 +110,11 @@ if __name__ == "__main__":
     if args.dataset == '300WLP':
 
         images = open(args.src_dir + '/images.txt').readlines()
-        for image in images[args.start:10]:
+        for image in images[args.start:]:
             cv_orig_im = cv2.imread(os.path.join(args.src_dir, image[:-1]))
             pil_im = Image.fromarray(cv2.cvtColor(cv_orig_im, cv2.COLOR_BGR2RGB))
-            bboxes, landmarks = detect_faces(pil_im, min_face_size = 30, in_weights_dir = args.weights_dir)   
+            # bboxes, landmarks = detect_faces(pil_im, min_face_size = 30, in_weights_dir = args.weights_dir)   
+            bboxes, landmarks = detect_faces(pil_im, min_face_size = 30)   
             if len(bboxes) < 1:
                 print('no face found')
                 continue

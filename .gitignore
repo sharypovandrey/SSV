@@ -1,0 +1,8 @@
+300W-LP/*
+.cache
+*.pyc
+.torch
+*.mdb
+data_preprocessing/mtcnn-pytorch/*
+dataset/*
+.bash_history

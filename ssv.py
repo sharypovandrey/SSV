@@ -23,6 +23,8 @@ from extern.network_blocks import PixelNorm
 
 eps = 1e-6
 
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
 # Generator module for VP aware synthesizer
 class VPASGenerator(nn.Module):
     def __init__(self, code_dim):
@@ -173,7 +175,7 @@ class VPNet(nn.Module):
         self.head_fc_t, self.head_x2_y2_mag_t, self.head_sin_cos_direc_t = self.head_seq(512, num_fc=256)
 
         # For the magnitute part
-        self.logsoftmax = nn.LogSoftmax(dim=2).cuda()  
+        self.logsoftmax = nn.LogSoftmax(dim=2).to(device)  
 
         # Setup the loss here. 
         self.loss_mag = negDotLoss()
@@ -271,7 +273,7 @@ class VPNet(nn.Module):
                                          [ 1,-1],
                                          [-1, 1],
                                          [-1,-1]])
-        lmap = Variable(lmap).cuda()
+        lmap = Variable(lmap).to(device)
         bsize = network_op['logprob_xxyy']['a'].size(0)
 
         vp_pred = odict()
@@ -284,7 +286,7 @@ class VPNet(nn.Module):
             # Get the direction from outputs
             sign_ind = torch.argmax(network_op['sign_x_y'][tgt].view(network_op['sign_x_y'][tgt].shape[0],4), dim=1)
             vp_pred['sign_'+tgt] = sign_ind
-            i_inds    = torch.from_numpy(np.arange(bsize)).cuda()
+            i_inds    = torch.from_numpy(np.arange(bsize)).to(device)
             direc_cos_sin = lmap.expand(bsize,4,2)[i_inds, sign_ind]
             cos_sin      = abs_cos_sin.view(abs_cos_sin.shape[0],2)*direc_cos_sin
             vp_pred[tgt]    = torch.atan2(cos_sin[:,1], cos_sin[:,0]) #
@@ -309,7 +311,7 @@ class VPNet(nn.Module):
                                             [-1, 1],
                                             [-1,-1]])
 
-        lmap = Variable(lmap).cuda()
+        lmap = Variable(lmap).to(device)
         batchsize = network_op['logprob_xxyy']['a'].size(0)
 
         vp_pred = edict()
@@ -327,7 +329,7 @@ class VPNet(nn.Module):
             else:
                 sign_ind_flipped = sign_ind
             vp_pred['sign_'+tgt] = sign_ind_flipped
-            item_inds    = torch.from_numpy(np.arange(batchsize)).cuda()
+            item_inds    = torch.from_numpy(np.arange(batchsize)).to(device)
             sign_cos_sin = lmap.expand(batchsize,4,2)[item_inds, sign_ind]
             cos_sin      = abs_cos_sin.view(abs_cos_sin.shape[0],2)*sign_cos_sin
             vp_pred[tgt]    = torch.atan2(cos_sin[:,1], cos_sin[:,0]) #

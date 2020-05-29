@@ -23,6 +23,8 @@ from utils.dataset import lmdbDataset_withGT
 
 import code
 
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
 os.environ['CUDA_VISIBLE_DEVICES']="1,"
 
 parser = argparse.ArgumentParser()
@@ -35,7 +37,7 @@ args = parser.parse_args()
 test_data_root = args.data_dir
 code_size = 64
 
-vpnet = nn.DataParallel(VPNet((code_size*2), instance_norm=True)).cuda()
+vpnet = nn.DataParallel(VPNet((code_size*2), instance_norm=True)).to(device)
 vpnet.load_state_dict(torch.load(args.model_path))
 vpnet.eval()
 
@@ -54,7 +56,7 @@ gt_a = []; gt_e = []; gt_t = []
 fnames = []
 for i, (sampled_batch, _, fname) in tqdm(enumerate(test_data_loader)):
     fname = fname[0]
-    op_cls, op_z, op_vp, _ = vpnet(sampled_batch.cuda())
+    op_cls, op_z, op_vp, _ = vpnet(sampled_batch.to(device))
 
     vp = vpnet.module.compute_vp_pred(op_vp)
 

@@ -21,6 +21,7 @@ from collections import OrderedDict as odict
 import os
 import imageio
 
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 def pil_loader(path):
     with open(path, 'rb') as f:
@@ -64,10 +65,10 @@ def get_az_rots(b_size, az_range):
     """
     Get azimuth angle rotation matrices.
     """
-    azs = torch.FloatTensor(1,b_size).uniform_(-az_range,az_range).cuda()
+    azs = torch.FloatTensor(1,b_size).uniform_(-az_range,az_range).to(device)
     cos_azs = torch.cos(azs)
     sin_azs = torch.sin(azs)
-    rot_azs = torch.zeros(b_size,3,4).cuda()
+    rot_azs = torch.zeros(b_size,3,4).to(device)
     rot_azs[:,0,0] = cos_azs
     rot_azs[:,0,2] = sin_azs
     rot_azs[:,1,1] = 1
@@ -93,10 +94,10 @@ def get_el_rots(b_size, el_range):
     Get elevation angle rotation matrices.
     """
 
-    els = torch.FloatTensor(1,b_size).uniform_(-el_range,el_range).cuda()
+    els = torch.FloatTensor(1,b_size).uniform_(-el_range,el_range).to(device)
     cos_els = torch.cos(els)
     sin_els = torch.sin(els)
-    rot_els = torch.zeros(b_size,3,4).cuda()
+    rot_els = torch.zeros(b_size,3,4).to(device)
     rot_els[:,0,0] = 1
     rot_els[:,1,1] = cos_els
     rot_els[:,1,2] = -sin_els
@@ -123,10 +124,10 @@ def get_ct_rots(b_size, ct_range):
     Get elevation angle rotation matrices.
     """
 
-    cts = torch.FloatTensor(1,b_size).uniform_(-ct_range,ct_range).cuda()
+    cts = torch.FloatTensor(1,b_size).uniform_(-ct_range,ct_range).to(device)
     cos_cts = torch.cos(cts)
     sin_cts = torch.sin(cts)
-    rot_cts = torch.zeros(b_size,3,4).cuda()
+    rot_cts = torch.zeros(b_size,3,4).to(device)
     rot_cts[:,0,0] = cos_cts
     rot_cts[:,0,1] = -sin_cts
     rot_cts[:,1,0] = sin_cts
@@ -157,16 +158,16 @@ def get_az_el_ct_rots(b_size, az_range, el_range, ct_range):
     rot_els, els, ccss_els, sign_cls_els = get_el_rots(b_size, el_range)
     rot_cts, cts, ccss_cts, sign_cls_cts = get_ct_rots(b_size, ct_range)
     rot_mats = torch.bmm(rot_azs[:,:,0:3],rot_els[:,:,0:3])
-    rot_mats_final = torch.cat( (torch.bmm(rot_mats[:,:,0:3],rot_cts[:,:,0:3]), torch.zeros((b_size,3,1)).cuda()), 2)
+    rot_mats_final = torch.cat( (torch.bmm(rot_mats[:,:,0:3],rot_cts[:,:,0:3]), torch.zeros((b_size,3,1)).to(device)), 2)
     vp_biternion = odict(
-                    ccss_a = ccss_azs.cuda(),
-                    ccss_e = ccss_els.cuda(),
-                    ccss_t = ccss_cts.cuda(),
-                    sign_a = sign_cls_azs.cuda(),
-                    sign_e = sign_cls_els.cuda(),
-                    sign_t = sign_cls_cts.cuda(),)
+                    ccss_a = ccss_azs.to(device),
+                    ccss_e = ccss_els.to(device),
+                    ccss_t = ccss_cts.to(device),
+                    sign_a = sign_cls_azs.to(device),
+                    sign_e = sign_cls_els.to(device),
+                    sign_t = sign_cls_cts.to(device),)
 
-    return rot_mats_final, azs.cuda(), els.cuda(), cts.cuda(), vp_biternion 
+    return rot_mats_final, azs.to(device), els.to(device), cts.to(device), vp_biternion 
 
 
 def gen_az_rots(b_size,az=None):
@@ -178,11 +179,11 @@ def gen_az_rots(b_size,az=None):
         azs = torch.FloatTensor(1,b_size).uniform_(-2,2)
     else:
         # print(az)
-        azs = torch.ones(1,b_size).cuda()*az
+        azs = torch.ones(1,b_size).to(device)*az
         azs = azs.float()
     cos_azs = torch.cos(azs)
     sin_azs = torch.sin(azs)
-    rot_azs = torch.zeros(b_size,3,4).cuda()
+    rot_azs = torch.zeros(b_size,3,4).to(device)
     rot_azs[:,0,0] = cos_azs
     rot_azs[:,0,2] = sin_azs
     rot_azs[:,1,1] = 1
@@ -200,11 +201,11 @@ def gen_el_rots(b_size,el=None):
         els = torch.FloatTensor(1,b_size).uniform_(-2,2)
     else:
         # print(el)
-        els = torch.ones(1,b_size).cuda()*el
+        els = torch.ones(1,b_size).to(device)*el
         els = els.float()
     cos_els = torch.cos(els)
     sin_els = torch.sin(els)
-    rot_els = torch.zeros(b_size,3,4).cuda()
+    rot_els = torch.zeros(b_size,3,4).to(device)
     rot_els[:,0,0] = 1
     rot_els[:,1,1] = cos_els
     rot_els[:,1,2] = -sin_els
@@ -222,11 +223,11 @@ def gen_ct_rots(b_size,ct=None):
         cts = torch.FloatTensor(1,b_size).uniform_(-2,2)
     else:
         # print(el)
-        cts = torch.ones(1,b_size).cuda()*ct
+        cts = torch.ones(1,b_size).to(device)*ct
         cts = cts.float()
     cos_cts = torch.cos(cts)
     sin_cts = torch.sin(cts)
-    rot_cts = torch.zeros(b_size,3,4).cuda()
+    rot_cts = torch.zeros(b_size,3,4).to(device)
     rot_cts[:,0,0] = cos_cts
     rot_cts[:,0,1] = -sin_cts
     rot_cts[:,1,0] = sin_cts
@@ -242,7 +243,7 @@ def generate_samples(generator, azs, els, cts, args, itr, tag, z_sampling='unifo
     os.makedirs(os.path.join(args.exp_root,args.exp_name,'gen_samples',str(itr), tag), exist_ok=True)
 
     gen_in11, gen_in12 = torch.FloatTensor(2, num_samples, args.code_size).uniform_(-1,1).chunk(2, 0)  
-    gen_in11 = gen_in11.cuda(); gen_in12 = gen_in12.cuda()     
+    gen_in11 = gen_in11.to(device); gen_in12 = gen_in12.to(device)     
     style_code = [gen_in11.squeeze(0), gen_in12.squeeze(0)]
 
     ind=0
@@ -259,7 +260,7 @@ def generate_samples(generator, azs, els, cts, args, itr, tag, z_sampling='unifo
                 rot_mats = torch.bmm(rot_azs_test[:,:,0:3],rot_cts_test[:,:,0:3])
                 rot_azs_test[:,:,0:3] = rot_mats    
 
-                image = generator(style_code, rot_azs_test.cuda())
+                image = generator(style_code, rot_azs_test.to(device))
                 ind+=1
                 img_name = os.path.join(args.exp_root, args.exp_name, 'gen_samples', str(itr), tag, str(ind)+'.png')
                 utils.save_image(image, img_name, nrow=4, normalize=True, range=(-1, 1))
@@ -314,7 +315,7 @@ class Saver():
 
 	def save_model(self, modelname, epoch):
 		torch.save(self.model_list[modelname].state_dict(), 
-					os.path.(self.modeldir,'%s_%08i_%s_checkpoint.pt'%(modelname, epoch, self.opt.model_name)) ) 
+					os.path(self.modeldir,'%s_%08i_%s_checkpoint.pt'%(modelname, epoch, self.opt.model_name)) ) 
 	
 	def save_all_models(self,epoch):
 		for modelname in self.model_list.keys():

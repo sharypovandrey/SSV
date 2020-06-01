@@ -25,6 +25,7 @@ from utils.ssv import AlexNetConv4, accumulate, sample_data, requires_grad
 from utils.ssv import Saver
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+print("cuda is available - ", torch.cuda.is_available())
 
 def train(args, dataset, generator, discriminator, saver):
 

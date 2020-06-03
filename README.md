@@ -14,7 +14,7 @@ SSV provides a framework to learn viewpoint estimation of objects just using ima
 #Docker
 ```
 docker build -t ssv docker/.
-docker run --rm -it -v ~/Github/SSV:/root ssv bash
+docker run --rm -it -v $(pwd):/root ssv bash
 ```
 
 ## Prerequisites

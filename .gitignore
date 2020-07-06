@@ -9,3 +9,4 @@ dataset/*
 
 dataset.tar.gz
 .env
+model/lin_sample_inds.npy

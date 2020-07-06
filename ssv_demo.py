@@ -22,6 +22,8 @@ sys.path.append('extern')
 from transformImage import transformImage
 from data_preprocessing.preprocess_data import readCalibrationFile, readPoseFile, detect_face
 
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"]="3"
 
@@ -35,7 +37,7 @@ transform = transforms.Compose(
 if __name__ == "__main__":
 
     code_size = 64
-    vpnet = nn.DataParallel(VPNet((code_size*2), instance_norm=True)).cuda()
+    vpnet = nn.DataParallel(VPNet((code_size*2), instance_norm=True)).to(device)
     vpnet.load_state_dict(torch.load('model/vpnet_ssv.pt'))
     vpnet.eval()
 
@@ -66,7 +68,7 @@ if __name__ == "__main__":
         trans_pil_im, R_trans = transformImage(pil_im, cv_orig_im, landmarks)
 
         in_im = transform(trans_pil_im)
-        op_cls, op_z, op_vp, _ = vpnet(in_im[None,:,:].cuda())
+        op_cls, op_z, op_vp, _ = vpnet(in_im[None,:,:].to(device))
         vp = vpnet.module.compute_vp_pred(op_vp)
         pred_a = np.rad2deg(vp['a'].cpu().detach().numpy())
         pred_e = np.rad2deg(vp['e'].cpu().detach().numpy())

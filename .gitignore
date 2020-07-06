@@ -1,0 +1,12 @@
+300W-LP/*
+.cache
+*.pyc
+.torch
+*.mdb
+dataset/*
+.bash_history
+*.pt
+
+dataset.tar.gz
+.env
+model/lin_sample_inds.npy
